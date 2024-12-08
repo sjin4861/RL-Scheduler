@@ -152,10 +152,6 @@ class NoETDEnv(gym.Env):
             'job_deadline': spaces.Box(low=-1, high=max_time, shape=(self.len_jobs, ), dtype=np.int64),
             'op_duration': spaces.Box(low=-1, high=20, shape=(self.len_jobs, ), dtype=np.int64),
             'op_type': spaces.Box(low=-1, high=25, shape=(self.len_jobs, ), dtype=np.int64),
-            # 추정 tardiness 관련 지표
-            "mean_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            "std_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            'cur_estimated_tardiness_per_job': spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
             # cost 관련 지표
             "cost_factor_per_time": spaces.Box(low=-100, high=100, shape=(4, ), dtype=np.float64),
             "current_costs": spaces.Box(low=0, high=50000, shape=(4, ), dtype=np.float64),
@@ -186,10 +182,6 @@ class NoETDEnv(gym.Env):
             'cur_op_type': spaces.Box(low=-1, high=25, shape=(self.len_jobs, ), dtype=np.int64),
             "cur_remain_working_time": spaces.Box(low=0, high=20, shape=(self.len_jobs, ), dtype=np.int64),
             'cur_remain_num_op': spaces.Box(low=0, high=10, shape=(self.len_jobs, ), dtype=np.int64),
-            # 추정 tardiness 관련 지표
-            "mean_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            "std_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            'cur_estimated_tardiness_per_job': spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
             # cost 관련 지표
             "current_costs": spaces.Box(low=0, high=50000, shape=(4, ), dtype=np.float64),
         })
@@ -217,10 +209,6 @@ class NoETDEnv(gym.Env):
             'cur_op_type': spaces.Box(low=-1, high=25, shape=(self.len_jobs, ), dtype=np.int64),
             "cur_remain_working_time": spaces.Box(low=0, high=20, shape=(self.len_jobs, ), dtype=np.int64),
             'cur_remain_num_op': spaces.Box(low=0, high=10, shape=(self.len_jobs, ), dtype=np.int64),
-            # 추정 tardiness 관련 지표
-            "mean_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            "std_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            'cur_estimated_tardiness_per_job': spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
             # cost 관련 지표
             "current_costs": spaces.Box(low=0, high=50000, shape=(4, ), dtype=np.float64),
         })        
@@ -252,10 +240,6 @@ class NoETDEnv(gym.Env):
             'cur_op_type': spaces.Box(low=-1, high=25, shape=(self.len_jobs, ), dtype=np.int64),
             "cur_remain_working_time": spaces.Box(low=0, high=20, shape=(self.len_jobs, ), dtype=np.int64),
             'cur_remain_num_op': spaces.Box(low=0, high=10, shape=(self.len_jobs, ), dtype=np.int64),
-            # 추정 tardiness 관련 지표
-            "mean_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            "std_estimated_tardiness_per_job": spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
-            'cur_estimated_tardiness_per_job': spaces.Box(low=-100, high=100, shape=(self.len_jobs, ), dtype=np.float64),
             # cost 관련 지표
             "current_costs": spaces.Box(low=0, high=50000, shape=(4, ), dtype=np.float64),
         })
@@ -278,9 +262,6 @@ class NoETDEnv(gym.Env):
     
     # def test_cal_best_finish_time(self):
     #     self.custom_scheduler.test_cal_best_finish_time()
-
-    # def test_cal_estimated_tardiness(self):
-    #     self.custom_scheduler.test_cal_estimated_tardiness()
 
     def step(self, action):
         # Map the action to the corresponding machine and job
@@ -354,9 +335,6 @@ class NoETDEnv(gym.Env):
         # observation['N_cur_job_deadline'] = safe_normalize(observation['cur_job_deadline'])
         # observation['N_cur_op_duration'] = safe_normalize(observation['cur_op_duration'])
         # observation['N_cur_remain_working_time'] = safe_normalize(observation['cur_remain_working_time'])
-        # observation['N_mean_estimated_tardiness_per_job'] = safe_normalize(observation['mean_estimated_tardiness_per_job'])
-        # observation['N_std_estimated_tardiness_per_job'] = safe_normalize(observation['std_estimated_tardiness_per_job'])
-        # observation['N_cur_estimated_tardiness_per_job'] = safe_normalize(observation['cur_estimated_tardiness_per_job'])
         # observation['N_machine_utilization_rate'] = safe_normalize(observation['machine_utilization_rate'])
 
 
@@ -371,12 +349,7 @@ class NoETDEnv(gym.Env):
         # observation.pop("cur_job_deadline", None)
         # observation.pop("cur_op_duration", None)
         # observation.pop("cur_remain_working_time", None)
-        # observation.pop("mean_estimated_tardiness_per_job", None)
-        # observation.pop("std_estimated_tardiness_per_job", None)
-        # observation.pop("cur_estimated_tardiness_per_job", None)
         # observation.pop("machine_utilization_rate", None)
-
-
         
 
         
