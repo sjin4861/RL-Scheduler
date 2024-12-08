@@ -127,7 +127,7 @@ class Job(JobInfo):
         if not self.is_done and other.is_done:
             return True
         
-        return self.deadline < other.deadline
+        return self.index < other.index
     
     def __str__(self) -> str:
         return f"{self.name} - Repeat {self.index + 1}\t\t:\tTardiness/Deadline = {self.tardiness}/{self.deadline}"
@@ -314,7 +314,7 @@ class customRepeatableSchedulerWithoutETD():
         return self.action_mask
 
     def update_state(self, action=None):
-        if action is not None:
+        if action is not None: 
             self.valid_count += 1
             self._update_operation_state(action)
             self._schedule_operation(action)
@@ -437,23 +437,6 @@ class customRepeatableSchedulerWithoutETD():
                 
             # Rebuild the heap based on the updated estimated tardiness values
             heapq.heapify(job_list)
-
-    # job 8번의 estimated가 잘 계산되고 있는지 test
-    def test_cal_estimated_tardiness(self):
-        for job in self.jobs[7]:
-            remaining_operations = [op for op in job.operation_queue if op.finish is None]
-            if remaining_operations:
-                earliest_operation = remaining_operations[0]
-                print(f"Job 8 repeat {job.index} - Operation {earliest_operation.index} - Earliest Start : {earliest_operation.earliest_start}")
-                best_finish_times = [
-                        machine.cal_best_finish_time(op_earliest_start=earliest_operation.earliest_start, op_type = earliest_operation.type, op_duration = earliest_operation.duration)
-                        for machine in self.machines
-                    ]
-                print(best_finish_times)
-            else:
-                print(f"Job 8 repeat {job.index} - Operation {job.operation_queue[-1].index} - Finish Time : {job.operation_queue[-1].finish}")
-            print(f"Job 8 repeat {job.index} - Estimated Tardiness : {job.estimated_tardiness}")
-
     
 
     def _schedule_to_array(self, operation_schedule):
@@ -515,25 +498,15 @@ class customRepeatableSchedulerWithoutETD():
                 continue
             
             # ETD 대신 deadline을 기준으로 job instance 정렬
-            job_instances = list(self.jobs[i])
-            job_instances = [job for job in job_instances if not job.is_done]
-
-            # deadline 순으로 정렬 (deadline이 작은게 우선)
-            job_instances.sort(key=lambda j: j.deadline)
-
-            # 가장 deadline이 가까운 job instance 선택
-            selected_job = job_instances[0]
+            job = heapq.heappop(self.jobs[i])
 
             # 해당 job instance에서 unscheduled operation 선택
-            for j, operation in enumerate(selected_job.operation_queue):
+            for j, operation in enumerate(job.operation_queue):
                 if operation.finish is None:
-                    self.schedule_buffer[i] = [selected_job.index, j]
+                    self.schedule_buffer[i] = [job.index, j]
                     break
 
-            # self.jobs[i]를 deadline 기준으로 다시 구성
-            # done이 아닌 job은 다시 리스트에 추가 (heap이 아닌 리스트 사용)
-            # 만약 heap 사용을 유지하고 싶다면, job.__lt__를 deadline기준으로 하고 heapq 사용 가능
-            self.jobs[i] = job_instances
+            heapq.heappush(self.jobs[i], job)
 
     def _schedule_operation(self, action):
         # Implement the scheduling logic based on the action
