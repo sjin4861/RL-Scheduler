@@ -20,4 +20,4 @@ def plot_learning_curves(log_dir):
     plt.grid(True)
     plt.show()
 
-plot_learning_curves("./tensorboard/ablation_study")
+plot_learning_curves("./tensorboard/ablation_study3")
