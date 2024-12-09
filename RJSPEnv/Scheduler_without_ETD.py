@@ -115,13 +115,11 @@ class Job(JobInfo):
         super().__init__(job_info['name'], job_info['color'], job_info['operations'], index)
         self.index = index
         self.deadline = deadline
-        self.estimated_tardiness = 0
         self.tardiness = 0
         self.time_exceeded = 0
         self.is_done = False
         
     def __lt__(self, other):
-        # Define the comparison first by estimated_tardiness descending and then by index ascending
         if self.is_done and not other.is_done:
             return False
         if not self.is_done and other.is_done:
@@ -147,7 +145,6 @@ class Operation():
         self.job_index = job_index
         self.color = color
         self.expected_start = 0
-        self.estimated_tardiness = 0
 
     def to_dict(self):
         return {
@@ -402,7 +399,6 @@ class customRepeatableSchedulerWithoutETD():
                 if not remaining_operations:
                     job.tardiness = job.operation_queue[-1].finish - job.deadline
                     job.time_exceeded = max(0, job.operation_queue[-1].finish - job.deadline)
-                    job.estimated_tardiness = float(job.tardiness)
                     job.is_done = True
                     continue
                 
@@ -422,18 +418,14 @@ class customRepeatableSchedulerWithoutETD():
                 
                 #v0 : Best_finish_time (mean 사용) - Operation deadline
                 # operation_deadline = job.deadline - sum(remaining_durations)
-                #job.estimated_tardiness = (approx_best_finish_time - operation_deadline) 
-                #v1 : Best_finish_time (min 사용) - Operation deadline : V0보다 더 안 좋아서 삭제
-
+                
                 #v2 : Best_finish_time (mean 사용) + Scaled Operation deadline
                 # scaled operation deadline 추가
                 # (지금까지 걸린 시간 + 자기 duration) / total duration 을 deadline에 곱한다
                 scaled_rate = (job.total_duration - sum(remaining_durations)) / job.total_duration
 
                 # scaled_operation_deadline = scaled_rate * job.deadline
-                # job.estimated_tardiness = approx_best_finish_time - scaled_operation_deadline
                 tardiness = approx_best_finish_time - job.deadline
-                job.estimated_tardiness = tardiness * scaled_rate
                 
             # Rebuild the heap based on the updated estimated tardiness values
             heapq.heapify(job_list)
@@ -587,16 +579,9 @@ class customRepeatableSchedulerWithoutETD():
 
     def get_observation(self):
         remaining_repeats = []
-        cur_estimated_tardiness_per_job = []
-        mean_estimated_tardiness_per_job = []
-        std_estimated_tardiness_per_job = []
         real_tardiness_per_job = []
         for job_list in self.jobs:
             # 아래 공식 분모 제거
-            estimated_tardiness = [job.estimated_tardiness / 100 for job in job_list]
-            cur_estimated_tardiness_per_job.append(job_list[0].estimated_tardiness / 100)
-            mean_estimated_tardiness_per_job.append(np.mean(estimated_tardiness))
-            std_estimated_tardiness_per_job.append(np.std(estimated_tardiness))
             real_tardiness_per_job.append([job.tardiness / 100 for job in job_list])
             remaining_repeats.append(sum([not job.is_done for job in job_list]))
 
@@ -669,11 +654,6 @@ class customRepeatableSchedulerWithoutETD():
             'cur_op_type': np.array(op_type),
             "cur_remain_working_time" : np.array(remaining_working_time),
             "cur_remain_num_op" : np.array(num_remaining_op),
-            # 추정 tardiness 관련 지표
-            'mean_estimated_tardiness_per_job': np.array(mean_estimated_tardiness_per_job),
-            'std_estimated_tardiness_per_job' : np.array(std_estimated_tardiness_per_job),
-            'cur_estimated_tardiness_per_job' : np.array(cur_estimated_tardiness_per_job),
-            # cost 관련 지표
             'current_costs' : np.array([self.cost_deadline, self.cost_hole, self.cost_processing, self.cost_makespan])
         }
         observation_v3 ={
@@ -696,11 +676,6 @@ class customRepeatableSchedulerWithoutETD():
             'cur_op_type': np.array(op_type),
             "cur_remain_working_time" : np.array(remaining_working_time),
             "cur_remain_num_op" : np.array(num_remaining_op),
-            # 추정 tardiness 관련 지표
-            'mean_estimated_tardiness_per_job': np.array(mean_estimated_tardiness_per_job),
-            'std_estimated_tardiness_per_job' : np.array(std_estimated_tardiness_per_job),
-            'cur_estimated_tardiness_per_job' : np.array(cur_estimated_tardiness_per_job),
-            # cost 관련 지표
             'current_costs' : np.array([self.cost_deadline, self.cost_hole, self.cost_processing, self.cost_makespan])
         }
         observation_v2 = {
@@ -725,11 +700,6 @@ class customRepeatableSchedulerWithoutETD():
             'cur_op_type': np.array(op_type),
             "cur_remain_working_time" : np.array(remaining_working_time),
             "cur_remain_num_op" : np.array(num_remaining_op),
-            # 추정 tardiness 관련 지표
-            'mean_estimated_tardiness_per_job': np.array(mean_estimated_tardiness_per_job),
-            'std_estimated_tardiness_per_job' : np.array(std_estimated_tardiness_per_job),
-            'cur_estimated_tardiness_per_job' : np.array(cur_estimated_tardiness_per_job),
-            # cost 관련 지표
             'current_costs' : np.array([self.cost_deadline, self.cost_hole, self.cost_processing, self.cost_makespan])
         }
         observation_v1 = {
@@ -755,11 +725,6 @@ class customRepeatableSchedulerWithoutETD():
             'job_deadline': np.array(job_deadline),
             'op_duration': np.array(op_duration),
             'op_type': np.array(op_type),
-            # 추정 tardiness 관련 지표
-            'mean_estimated_tardiness_per_job': np.array(mean_estimated_tardiness_per_job),
-            'std_estimated_tardiness_per_job' : np.array(std_estimated_tardiness_per_job),
-            'cur_estimated_tardiness_per_job' : np.array(cur_estimated_tardiness_per_job),
-            # cost 관련 지표
             'cost_factor_per_time': np.array([self.cost_deadline_per_time, self.cost_hole_per_time, self.cost_processing_per_time, self.cost_makespan_per_time]),
             'current_costs' : np.array([self.cost_deadline, self.cost_hole, self.cost_processing, self.cost_makespan])
         }
@@ -782,7 +747,6 @@ class customRepeatableSchedulerWithoutETD():
             'machine_score': self.machine_term,
             'machine_operation_rate': [machine.operation_rate for machine in self.machines],
             'schedule_buffer': self.schedule_buffer,
-            'job_estimated_tardiness': [job.estimated_tardiness for job_list in self.jobs for job in job_list],
             'current_schedule': self.current_schedule,
             'job_deadline': [job.deadline for job_list in self.jobs for job in job_list],
             'job_time_exceeded': [job.time_exceeded for job_list in self.jobs for job in job_list],
