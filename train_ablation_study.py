@@ -13,8 +13,19 @@ def train_model(env, algo_class, total_steps, model_name, tensorboard_log, callb
         policy="MultiInputPolicy",
         env=env,
         verbose=1,
-        tensorboard_log=tensorboard_log
+        tensorboard_log=tensorboard_log,
+        policy_kwargs=dict(
+            net_arch=[dict(pi=[512, 256, 128, 128], vf=[512, 256, 256, 256])]
+        ),
+        learning_rate=0.00003,
+        batch_size=256,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.1,
+        n_steps=2048,
+        ent_coef=0.01
     )
+
     new_logger = configure(tensorboard_log, ["tensorboard", "csv", "stdout"])
     model.set_logger(new_logger)
 
@@ -24,12 +35,10 @@ def train_model(env, algo_class, total_steps, model_name, tensorboard_log, callb
 
 def main():
     parser = argparse.ArgumentParser(description="Train models under four different conditions.")
-    parser.add_argument('--steps', type=int, default=1000000, help="Total training steps for each model.")
+    parser.add_argument('--steps', type=int, default=5000000, help="Total training steps for each model.")
     args = parser.parse_args()
-
+    directory = "ablation_study3"
     conditions = [
-        {"env_type": "NoETDEnv", "algo": "PPO"},
-        {"env_type": "ETDEnv", "algo": "PPO"},
         {"env_type": "NoETDEnv", "algo": "MaskablePPO"},
         {"env_type": "ETDEnv", "algo": "MaskablePPO"}
     ]
@@ -38,13 +47,13 @@ def main():
         env_type = condition["env_type"]
         algo = condition["algo"]
         model_name = f"{env_type}_{algo}"
-        tensorboard_log = f"./tensorboard/ablation_study2/{model_name}"
+        tensorboard_log = f"./tensorboard/{directory}/{model_name}"
 
         # 환경 설정
-        instance = "5x5"  # 필요에 따라 변경
+        instance = "12x8"  # 필요에 따라 변경
         machine_config_path = f"instances/Machines/v0-{instance}.json"
-        job_config_path = f"instances/Jobs/v0-{instance}-8.json"
-        job_repeats_params = [(5, 1)] * 5
+        job_config_path = f"instances/Jobs/v0-{instance}-12.json"
+        job_repeats_params = [(3, 1)] * 12
 
         if env_type == "ETDEnv":
             env = RJSPEnv(
@@ -76,15 +85,15 @@ def main():
         # 콜백 설정
         checkpoint_callback = CheckpointCallback(
             save_freq=args.steps//10,
-            save_path='./models/ablation_study2/',
+            save_path=f'./models/{directory}/',
             name_prefix=f'model_checkpoint_{model_name}'
         )
 
         if algo == "MaskablePPO":
             eval_callback = MaskableEvalCallback(
                 eval_env=env,
-                best_model_save_path=f'./models/ablation_study2/best_{model_name}',
-                log_path=f'./logs/ablation_study2/{model_name}_eval',
+                best_model_save_path=f'./models/{directory}/best_{model_name}',
+                log_path=f'./logs/{directory}/{model_name}_eval',
                 eval_freq=10000,
                 n_eval_episodes=5,
                 deterministic=False,
@@ -94,8 +103,8 @@ def main():
         else:
             eval_callback = EvalCallback(
                 eval_env=env,
-                best_model_save_path=f'./models/ablation_study2/best_{model_name}',
-                log_path=f'./logs/ablation_study2/{model_name}_eval',
+                best_model_save_path=f'./models/{directory}/best_{model_name}',
+                log_path=f'./logs/{directory}/{model_name}_eval',
                 eval_freq=10000,
                 n_eval_episodes=5,
                 deterministic=False,
@@ -104,9 +113,9 @@ def main():
             callbacks = CallbackList([checkpoint_callback, eval_callback])
 
         # 디렉토리 생성
-        os.makedirs('./models/ablation_study2/', exist_ok=True)
-        os.makedirs('./tensorboard/ablation_study2/', exist_ok=True)
-        os.makedirs('./logs/ablation_study2/', exist_ok=True)
+        os.makedirs(f'./models/{directory}/', exist_ok=True)
+        os.makedirs(f'./tensorboard/{directory}/', exist_ok=True)
+        os.makedirs(f'./logs/{directory}/', exist_ok=True)
 
         # 모델 학습
         print(f"\n==========================")
